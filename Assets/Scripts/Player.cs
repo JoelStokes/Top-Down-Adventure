@@ -1,6 +1,20 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
+/*Player Controller:
+ * Performs user movement, attacks, & monitors overall health of main character.
+ * Can freely traverse between different scenes.
+ * Also controls interactions with other objects/npcs/enemies.
+ * 
+ * To do:
+ * dialogPostCount is count down based on frames
+
+    change inputs from keys to Unity Input
+
+    In move, use Delta for diagonal (See Pro notes)
+ */
 
 public class Player : MonoBehaviour
 {
@@ -15,7 +29,14 @@ public class Player : MonoBehaviour
     private int dialogPostCount = 0;
     private int dialogPostLim = 40;
 
-    private int facing = 2;  //0=North, 1=East, 2=South, 3=West
+    enum Dir    //Used to set current direction for animations / sword swings
+    {
+        north,
+        east,
+        south,
+        west
+    }
+    private Dir facing;
 
     public int money = 0;   //Only public to be read by GUI
     public int health = 5;
@@ -37,7 +58,7 @@ public class Player : MonoBehaviour
     private GameObject DialogController;
     private MagicMeter MagicMeter;
 
-    public void Awake()     //Needed for player to move from scene to scene
+    public void Awake()     //Allow Player to move from scene to scene
     {
         DontDestroyOnLoad(this);
 
@@ -47,21 +68,30 @@ public class Player : MonoBehaviour
         }
     }
 
-    void Start()
+    void OnEnable()     //Sets function for every scene change to grab new location's camera & GUI
     {
-        rigi = GetComponent<Rigidbody2D>();
-        anim = GetComponent<Animator>();
-        audioSource = GetComponent<AudioSource>();
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
         cameraScroll = GameObject.Find("Main Camera").GetComponent<CameraScroll>();
         DialogController = GameObject.Find("DialogController");
         MagicMeter = GameObject.Find("MagicMeter").GetComponent<MagicMeter>();
     }
 
+    void Start()
+    {
+        rigi = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+        audioSource = GetComponent<AudioSource>();
+
+        facing = Dir.south;
+    }
+
     void Update()
     {
-        //DontDestroyOnLoad(this.gameObject);
-
-        if (hurting)
+        if (hurting)    //Invincibility grace period to prevent player being hurt multiple times
         {
             hurtTimer += Time.deltaTime;
             if (hurtTimer > hurtLim)
@@ -71,30 +101,11 @@ public class Player : MonoBehaviour
             }
         }
 
-        if (!talking && Time.timeScale == 1)
+        if (!talking && Time.timeScale == 1)    //Prevent attacks if in dialog or paused
         {
             if (Input.GetKeyDown(KeyCode.Space) && !action && !hurting)
             {
-                switch (facing)
-                {
-                    case 0:
-                        Stick.transform.localRotation = Quaternion.Euler(0, 0, 0);
-                        Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, .5f);
-                        break;
-                    case 1:
-                        Stick.transform.localRotation = Quaternion.Euler(0, 0, 270);
-                        Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, -.5f);
-                        break;
-                    case 2:
-                        Stick.transform.localRotation = Quaternion.Euler(0, 0, 180);
-                        Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, -.5f);
-                        break;
-                    default:
-                        Stick.transform.localRotation = Quaternion.Euler(0, 0, 90);
-                        Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, .5f);
-                        break;
-                }
-                anim.Play("StickSwing");
+                Attack();
             }
 
             if (Input.GetKeyDown(KeyCode.F) && !action && !hurting)
@@ -111,38 +122,60 @@ public class Player : MonoBehaviour
                 Move();
             }
 
-            if (dialogPostCount > 0)    //Prevent accidental double talk
+            if (dialogPostCount > 0)    //Prevent accidental NPC double talk if player is mashing button
                 dialogPostCount--;
         }
     }
 
-    void Move()
+    void Attack()
+    {
+        switch (facing) //Set Rotation & Depth of stick swing based on current direction, then play attack
+        {
+            case Dir.north:
+                Stick.transform.localRotation = Quaternion.Euler(0, 0, 0);
+                Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, .5f);
+                break;
+            case Dir.east:
+                Stick.transform.localRotation = Quaternion.Euler(0, 0, 270);
+                Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, -.5f);
+                break;
+            case Dir.south:
+                Stick.transform.localRotation = Quaternion.Euler(0, 0, 180);
+                Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, -.5f);
+                break;
+            case Dir.west:
+                Stick.transform.localRotation = Quaternion.Euler(0, 0, 90);
+                Stick.transform.position = new Vector3(Stick.transform.position.x, Stick.transform.position.y, .5f);
+                break;
+            default:
+                Debug.Log("Invalid Direction Detected!");
+                break;
+        }
+        anim.Play("StickSwing");
+    }
+
+    void Move()     //Handle player movement
     {
         rigi.MovePosition(transform.position + change * walkSpeed * Time.deltaTime);
         if (change.y > 0)
         {
-            facing = 0;
+            facing = Dir.north;
         }
         else if (change.y < 0)
         {
-            facing = 2;
+            facing = Dir.south;
         }
         else if (change.x > 0)
         {
-            facing = 1;
+            facing = Dir.east;
         }
         else if (change.x < 0)
         {
-            facing = 3;
+            facing = Dir.west;
         }
     }
 
-    void SetPosition(Vector2 newPos)
-    {
-        transform.position = new Vector3(newPos.x, newPos.y, transform.position.z);
-    }
-
-    void Hurt(int damage)
+    void Hurt(int damage)   //Handle player injury
     {
         health -= damage;
 
@@ -166,14 +199,13 @@ public class Player : MonoBehaviour
             string type = warpInfo.type;
             if (type == "Door")
             {
-                //Create new Zoom object & pass warp info along to it
+                //Start Zoom effect & pass warp info along to it
                 GameObject newZoom = Instantiate(ZoomPrefab, new Vector3(transform.position.x, transform.position.y, transform.position.z-1.5f), Quaternion.identity);
                 newZoom.GetComponent<ZoomLoad>().SetVariables(warpInfo.location, warpInfo.coordinates, warpInfo.cameraCoordinates);
             }
-            else if (type == "Pan")
+            else if (type == "Pan")     //Hit camera's edge and prepares to pan the camera in the moving direction
             {
                 string param = other.GetComponent<WarpInfo>().location;
-                GameObject.Find("Main Camera").GetComponent<CameraScroll>().ScreenTransition(param);    //Have to find gameObject each time, deleted on screen transitions
             } 
         } else if (other.gameObject.tag == "Coin")
         {
@@ -187,9 +219,9 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D other)
+    void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == "Enemy")
+        if (other.gameObject.tag == "Enemy")    //Add knockback force to player and get enemy's strength for hurt calculation
         {
             float magnitude = 8;
             Vector2 dir = new Vector2(other.transform.position.x - transform.position.x, other.transform.position.y - transform.position.y);
@@ -206,7 +238,7 @@ public class Player : MonoBehaviour
             }
         } else if (other.gameObject.tag == "Lock")
         {
-            if (keys > 0)
+            if (keys > 0)   //Use collected key to open lock
             {
                 keys--;
                 AudioSource.PlayClipAtPoint(lockSFX, 0.9f * Camera.main.transform.position + 0.1f * transform.position, .5f);
@@ -215,18 +247,18 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void OnTriggerStay2D(Collider2D other)
+    void OnTriggerStay2D(Collider2D other)
     {
         if (!talking)
         {
-            if (other.tag == "Text" && Input.GetKeyDown(KeyCode.Space) && dialogPostCount <= 0)
+            if (other.tag == "Text" && Input.GetKeyDown(KeyCode.Space) && dialogPostCount <= 0) //Start dialog with sign or NPC
             {
                 talking = true;
                 dialogPostCount = dialogPostLim;
                 Dialog otherDialog = other.GetComponent<Dialog>();
                 DialogController.GetComponent<DialogController>().BeginDialog(otherDialog.personName, otherDialog.text, otherDialog.sfx, otherDialog.changePitch);
             }
-            else if (other.tag == "Chest" && Input.GetKeyDown(KeyCode.Space))
+            else if (other.tag == "Chest" && Input.GetKeyDown(KeyCode.Space))   //Open Chest
             {
                 if (other.GetComponent<Chest>() != null)
                 {
