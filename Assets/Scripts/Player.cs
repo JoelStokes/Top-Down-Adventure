@@ -6,14 +6,7 @@ using UnityEngine.SceneManagement;
 /*Player Controller:
  * Performs user movement, attacks, & monitors overall health of main character.
  * Can freely traverse between different scenes.
- * Also controls interactions with other objects/npcs/enemies.
- * 
- * To do:
- * dialogPostCount is count down based on frames
-
-    change inputs from keys to Unity Input
-
-    In move, use Delta for diagonal (See Pro notes)
+ * Also handles interactions with other objects/npcs/enemies.
  */
 
 public class Player : MonoBehaviour
@@ -26,8 +19,8 @@ public class Player : MonoBehaviour
     public bool action = false; //Controlled through animator
 
     public bool talking = false; //Controlled through DialogController
-    private int dialogPostCount = 0;
-    private int dialogPostLim = 40;
+    private float dialogPostCount = 0;
+    private float dialogPostLim = .6f;
 
     enum Dir    //Used to set current direction for animations / sword swings
     {
@@ -68,12 +61,12 @@ public class Player : MonoBehaviour
         }
     }
 
-    void OnEnable()     //Sets function for every scene change to grab new location's camera & GUI
+    void OnEnable()     //Sets function for every scene change to grab new location's camera & GUI for easier scene building
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneLoaded += LoadGUI;
     }
 
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    void LoadGUI(Scene scene, LoadSceneMode mode)
     {
         cameraScroll = GameObject.Find("Main Camera").GetComponent<CameraScroll>();
         DialogController = GameObject.Find("DialogController");
@@ -86,7 +79,7 @@ public class Player : MonoBehaviour
         anim = GetComponent<Animator>();
         audioSource = GetComponent<AudioSource>();
 
-        facing = Dir.south;
+        facing = Dir.south;     //Always start game with player facing towards camera
     }
 
     void Update()
@@ -103,12 +96,12 @@ public class Player : MonoBehaviour
 
         if (!talking && Time.timeScale == 1)    //Prevent attacks if in dialog or paused
         {
-            if (Input.GetKeyDown(KeyCode.Space) && !action && !hurting)
+            if (Input.GetButton("Action") && !action && !hurting)
             {
                 Attack();
             }
 
-            if (Input.GetKeyDown(KeyCode.F) && !action && !hurting)
+            if (Input.GetButton("Magic") && !action && !hurting)
             {
                 MagicMeter.UseSpell(20.0f);
             }
@@ -123,7 +116,7 @@ public class Player : MonoBehaviour
             }
 
             if (dialogPostCount > 0)    //Prevent accidental NPC double talk if player is mashing button
-                dialogPostCount--;
+                dialogPostCount -= Time.deltaTime;
         }
     }
 
@@ -251,14 +244,14 @@ public class Player : MonoBehaviour
     {
         if (!talking)
         {
-            if (other.tag == "Text" && Input.GetKeyDown(KeyCode.Space) && dialogPostCount <= 0) //Start dialog with sign or NPC
+            if (other.tag == "Text" && Input.GetButton("Action") && dialogPostCount <= 0) //Start dialog with sign or NPC
             {
                 talking = true;
                 dialogPostCount = dialogPostLim;
                 Dialog otherDialog = other.GetComponent<Dialog>();
                 DialogController.GetComponent<DialogController>().BeginDialog(otherDialog.personName, otherDialog.text, otherDialog.sfx, otherDialog.changePitch);
             }
-            else if (other.tag == "Chest" && Input.GetKeyDown(KeyCode.Space))   //Open Chest
+            else if (other.tag == "Chest" && Input.GetButton("Action"))   //Open Chest
             {
                 if (other.GetComponent<Chest>() != null)
                 {

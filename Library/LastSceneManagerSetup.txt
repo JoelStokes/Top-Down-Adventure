@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/Scenes/Beta/Outland.unity
+- path: Assets/Scenes/Alpha/SampleScene.unity
   isLoaded: 1
   isActive: 1
