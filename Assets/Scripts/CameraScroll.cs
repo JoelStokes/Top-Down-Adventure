@@ -12,6 +12,7 @@ public class CameraScroll : MonoBehaviour
     private float step = 0;
     private float maxTimeX = 3f;
     private float maxTimeY = 1.5f;
+    private float travelLength = 9.85f;
     private Vector3 NewPos;
 
     private void Update()
@@ -49,19 +50,19 @@ public class CameraScroll : MonoBehaviour
             switch (dir)
             {
                 case "Down":
-                    distance.x = 0; distance.y = -9.85f;
+                    distance.x = 0; distance.y = -travelLength;
                     step = maxTimeY * Time.deltaTime;
                     break;
                 case "Up":
-                    distance.x = 0; distance.y = 9.85f;
+                    distance.x = 0; distance.y = travelLength;
                     step = maxTimeY * Time.deltaTime;
                     break;
                 case "Left":
-                    distance.x = -18; distance.y = 0;
+                    distance.x = -travelLength; distance.y = 0;
                     step = maxTimeX * Time.deltaTime;
                     break;
                 case "Right":
-                    distance.x = 18; distance.y = 0;
+                    distance.x = travelLength; distance.y = 0;
                     step = maxTimeX * Time.deltaTime;
                     break;
             }

@@ -273,7 +273,7 @@ public class Player : MonoBehaviour
 
     void OnTriggerStay2D(Collider2D other)
     {
-        if (!talking)
+        if (!talking && !action)
         {
             if (other.CompareTag("Text") && attackCounter > 0 && dialogPostCount <= 0) //Start dialog with sign or NPC
             {
