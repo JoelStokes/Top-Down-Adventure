@@ -9,4 +9,5 @@ public class WarpInfo : MonoBehaviour
     public Vector2 coordinates;
     public Vector2 cameraCoordinates;
     public int facing;  //Which direction you face after going through it
+    public Color color;  //What color the graph paper will be in the new scene
 }

@@ -10,9 +10,10 @@ public class CameraScroll : MonoBehaviour
     //private int counter = 20;
 
     private float step = 0;
-    private float maxTimeX = 3f;
-    private float maxTimeY = 1.5f;
-    private float travelLength = 9.85f;
+    private float maxTimeX = 3.3f;    //Same if square plafield, different otherwise
+    private float maxTimeY = 2.8f;
+    private float travelLengthX = 15.85f;
+    private float travelLengthY = 9.85f;
     private Vector3 NewPos;
 
     private void Update()
@@ -50,19 +51,19 @@ public class CameraScroll : MonoBehaviour
             switch (dir)
             {
                 case "Down":
-                    distance.x = 0; distance.y = -travelLength;
+                    distance.x = 0; distance.y = -travelLengthY;
                     step = maxTimeY * Time.deltaTime;
                     break;
                 case "Up":
-                    distance.x = 0; distance.y = travelLength;
+                    distance.x = 0; distance.y = travelLengthY;
                     step = maxTimeY * Time.deltaTime;
                     break;
                 case "Left":
-                    distance.x = -travelLength; distance.y = 0;
+                    distance.x = -travelLengthX; distance.y = 0;
                     step = maxTimeX * Time.deltaTime;
                     break;
                 case "Right":
-                    distance.x = travelLength; distance.y = 0;
+                    distance.x = travelLengthX; distance.y = 0;
                     step = maxTimeX * Time.deltaTime;
                     break;
             }

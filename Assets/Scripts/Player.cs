@@ -16,7 +16,7 @@ public class Player : MonoBehaviour
     public float deadZone;
     private Vector2 currentMove;
     public GameObject Stick;
-    public GameObject ZoomPrefab;
+    public ChangeScene changeSceneScript;
 
     private float attackCounter = 0;
     private bool attack = false;
@@ -247,9 +247,8 @@ public class Player : MonoBehaviour
             string type = warpInfo.type;
             if (type == "Door")
             {
-                //Start Zoom effect & pass warp info along to it
-                GameObject newZoom = Instantiate(ZoomPrefab, new Vector3(transform.position.x, transform.position.y, transform.position.z-1.5f), Quaternion.identity);
-                newZoom.GetComponent<ZoomLoad>().SetVariables(warpInfo.location, warpInfo.coordinates, warpInfo.cameraCoordinates);
+                //Start scene change animation & pass proper info
+                changeSceneScript.SetVariables(warpInfo.location, warpInfo.coordinates, warpInfo.cameraCoordinates, warpInfo.facing, warpInfo.color);
             }
             else if (type == "Pan")     //Hit camera's edge and prepares to pan the camera in the moving direction
             {
