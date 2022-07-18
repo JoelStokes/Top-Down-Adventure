@@ -10,8 +10,8 @@ public class CameraScroll : MonoBehaviour
     //private int counter = 20;
 
     private float step = 0;
-    private float maxTimeX = 26f;
-    private float maxTimeY = 15f;
+    private float maxTimeX = 3f;
+    private float maxTimeY = 1.5f;
     private Vector3 NewPos;
 
     private void Update()

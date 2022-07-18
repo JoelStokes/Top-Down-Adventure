@@ -7,7 +7,11 @@ public class Dialog : MonoBehaviour {
 
     public bool changePitch;
     public string personName;
+
+    [TextArea(5,5)]
     public string[] text;
+
+     [TextArea(5,5)]
     public string[] repeatText;     //If talked to twice in a row, display a different message
     public AudioClip sfx;
 

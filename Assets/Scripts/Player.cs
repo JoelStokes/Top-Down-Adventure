@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 /*Player Controller:
  * Performs user movement, attacks, & monitors overall health of main character.
@@ -12,10 +13,16 @@ using UnityEngine.SceneManagement;
 public class Player : MonoBehaviour
 {
     public float walkSpeed;
-    Vector3 change;
+    public float deadZone;
+    private Vector2 currentMove;
     public GameObject Stick;
     public GameObject ZoomPrefab;
 
+    private float attackCounter = 0;
+    private bool attack = false;
+    private float abilityCounter = 0;
+    private bool ability = false;
+    private float buttonCount = .25f;   //Buffer between button presses to avoid attack/ability spam
     public bool action = false; //Controlled through animator
 
     public bool talking = false; //Controlled through DialogController
@@ -38,6 +45,7 @@ public class Player : MonoBehaviour
     private float hurtTimer = 0;    //Prevents movement while initial knockback is happening. Also prevents double damage
     private float hurtLim = .3f;
     private bool hurting = false;
+    private bool textZone = false;
     public AudioClip[] hurtSFX;
     public AudioClip deathSFX;
     public AudioClip keySFX;
@@ -82,6 +90,35 @@ public class Player : MonoBehaviour
         facing = Dir.south;     //Always start game with player facing towards camera
     }
 
+    void FixedUpdate(){
+        if (!talking && Time.timeScale == 1)    //Prevent attacks if in dialog or paused
+        {
+            if (attack && !action && !hurting)
+            {
+                if (!textZone){
+                    Attacking();
+                }
+                attackCounter = buttonCount;
+                attack = false;
+            }
+
+            if (ability && !action && !hurting)
+            {
+                MagicMeter.UseSpell(20.0f);
+                abilityCounter = buttonCount;
+                ability = false;
+            }
+
+            if (currentMove != Vector2.zero && !action && !hurting && !cameraScroll.panning)
+            {
+                Move();
+            }
+
+            if (dialogPostCount > 0)    //Prevent accidental NPC double talk if player is mashing button
+                dialogPostCount -= Time.deltaTime;
+        }
+    }
+
     void Update()
     {
         if (hurting)    //Invincibility grace period to prevent player being hurt multiple times
@@ -94,33 +131,21 @@ public class Player : MonoBehaviour
             }
         }
 
-        if (!talking && Time.timeScale == 1)    //Prevent attacks if in dialog or paused
-        {
-            if (Input.GetButton("Action") && !action && !hurting)
-            {
-                Attack();
-            }
+        if (attackCounter > 0){
+            attackCounter -= Time.deltaTime;
+        }
 
-            if (Input.GetButton("Magic") && !action && !hurting)
-            {
-                MagicMeter.UseSpell(20.0f);
-            }
-
-            change = Vector3.zero;
-            change.x = Input.GetAxisRaw("Horizontal");
-            change.y = Input.GetAxisRaw("Vertical");
-
-            if (change != Vector3.zero && !action && !hurting && !cameraScroll.panning)
-            {
-                Move();
-            }
-
-            if (dialogPostCount > 0)    //Prevent accidental NPC double talk if player is mashing button
-                dialogPostCount -= Time.deltaTime;
+        if (abilityCounter > 0){
+            abilityCounter -= Time.deltaTime;
         }
     }
 
-    void Attack()
+    void Move()     //Handle player movement
+    {
+        rigi.MovePosition(transform.position + new Vector3(currentMove.x, currentMove.y).normalized * walkSpeed * Time.deltaTime);
+    }
+
+    void Attacking()
     {
         switch (facing) //Set Rotation & Depth of stick swing based on current direction, then play attack
         {
@@ -147,27 +172,6 @@ public class Player : MonoBehaviour
         anim.Play("StickSwing");
     }
 
-    void Move()     //Handle player movement
-    {
-        rigi.MovePosition(transform.position + change * walkSpeed * Time.deltaTime);
-        if (change.y > 0)
-        {
-            facing = Dir.north;
-        }
-        else if (change.y < 0)
-        {
-            facing = Dir.south;
-        }
-        else if (change.x > 0)
-        {
-            facing = Dir.east;
-        }
-        else if (change.x < 0)
-        {
-            facing = Dir.west;
-        }
-    }
-
     void Hurt(int damage)   //Handle player injury
     {
         health -= damage;
@@ -184,9 +188,60 @@ public class Player : MonoBehaviour
         hurting = true;
     }
 
+    //Input Manager Functions
+    public void SetAttack(InputAction.CallbackContext context){
+        if (context.phase == InputActionPhase.Started && attackCounter <= 0 && !attack){
+            attack = true;
+        }
+    }
+
+    public void SetAbility(InputAction.CallbackContext context){
+        if (context.phase == InputActionPhase.Started && abilityCounter <= 0 && !ability){
+            ability = true;
+        }
+    }
+
+    public void SetMove(InputAction.CallbackContext context){
+        Vector2 newMove = context.ReadValue<Vector2>();
+        if (newMove.x > deadZone){
+            currentMove.x = 1;
+        } else if (newMove.x < -deadZone){
+            currentMove.x = -1;
+        } else {
+            currentMove.x = 0;
+        }
+
+        if (newMove.y > deadZone){
+            currentMove.y = 1;
+        } else if (newMove.y < -deadZone){
+            currentMove.y = -1;
+        } else {
+            currentMove.y = 0;
+        }
+
+        //Need to compare greater move value in order for controller stick facing to feel natural
+        if (currentMove.y > 0 && currentMove.y > Mathf.Abs(currentMove.x))
+        {
+            facing = Dir.north;
+        }
+        else if (currentMove.y < 0 && currentMove.y < -Mathf.Abs(currentMove.x))
+        {
+            facing = Dir.south;
+        }
+        else if (currentMove.x > 0)
+        {
+            facing = Dir.east;
+        }
+        else if (currentMove.x < 0)
+        {
+            facing = Dir.west;
+        }
+    }
+
+    //Triggers & Collisions
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.tag == "Warp" && !action)
+        if (other.CompareTag("Warp") && !action)
         {
             WarpInfo warpInfo = other.GetComponent<WarpInfo>();
             string type = warpInfo.type;
@@ -199,22 +254,56 @@ public class Player : MonoBehaviour
             else if (type == "Pan")     //Hit camera's edge and prepares to pan the camera in the moving direction
             {
                 string param = other.GetComponent<WarpInfo>().location;
+                cameraScroll.ScreenTransition(param);
             } 
-        } else if (other.gameObject.tag == "Coin")
+        } else if (other.CompareTag("Coin"))
         {
             money += other.GetComponent<Coin>().value;
             Destroy(other.gameObject);
-        } else if (other.gameObject.tag == "Key")
+        } else if (other.CompareTag("Key"))
         {
             keys++;
             AudioSource.PlayClipAtPoint(keySFX, 0.9f * Camera.main.transform.position + 0.1f * transform.position, .75f);
             Destroy(other.gameObject);
+        } else if (other.CompareTag("Text") || other.CompareTag("Chest")){
+            textZone = true;
         }
     }
 
+
+    void OnTriggerStay2D(Collider2D other)
+    {
+        if (!talking)
+        {
+            if (other.CompareTag("Text") && attackCounter > 0 && dialogPostCount <= 0) //Start dialog with sign or NPC
+            {
+                talking = true;
+                dialogPostCount = dialogPostLim;
+                Dialog otherDialog = other.GetComponent<Dialog>();
+                DialogController.GetComponent<DialogController>().BeginDialog(otherDialog.personName, otherDialog.text, otherDialog.sfx, otherDialog.changePitch);
+            }
+            else if (other.CompareTag("Chest") && attackCounter > 0)   //Open Chest
+            {
+                if (other.GetComponent<Chest>() != null)
+                {
+                    talking = true;
+                    dialogPostCount = dialogPostLim;
+                    other.GetComponent<Chest>().Open();
+                }
+            }
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D other)  //Used to start/stop attack prevention region
+    {
+        if (other.CompareTag("Text") || other.CompareTag("Chest")){
+            textZone = false;
+        }
+    }    
+    
     void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == "Enemy")    //Add knockback force to player and get enemy's strength for hurt calculation
+        if (other.gameObject.CompareTag("Enemy"))    //Add knockback force to player and get enemy's strength for hurt calculation
         {
             float magnitude = 8;
             Vector2 dir = new Vector2(other.transform.position.x - transform.position.x, other.transform.position.y - transform.position.y);
@@ -229,36 +318,13 @@ public class Player : MonoBehaviour
             {
                 Hurt(other.gameObject.GetComponent<EnemyChaser>().strength);
             }
-        } else if (other.gameObject.tag == "Lock")
+        } else if (other.gameObject.CompareTag("Lock"))
         {
             if (keys > 0)   //Use collected key to open lock
             {
                 keys--;
                 AudioSource.PlayClipAtPoint(lockSFX, 0.9f * Camera.main.transform.position + 0.1f * transform.position, .5f);
                 Destroy(other.gameObject);
-            }
-        }
-    }
-
-    void OnTriggerStay2D(Collider2D other)
-    {
-        if (!talking)
-        {
-            if (other.tag == "Text" && Input.GetButton("Action") && dialogPostCount <= 0) //Start dialog with sign or NPC
-            {
-                talking = true;
-                dialogPostCount = dialogPostLim;
-                Dialog otherDialog = other.GetComponent<Dialog>();
-                DialogController.GetComponent<DialogController>().BeginDialog(otherDialog.personName, otherDialog.text, otherDialog.sfx, otherDialog.changePitch);
-            }
-            else if (other.tag == "Chest" && Input.GetButton("Action"))   //Open Chest
-            {
-                if (other.GetComponent<Chest>() != null)
-                {
-                    talking = true;
-                    dialogPostCount = dialogPostLim;
-                    other.GetComponent<Chest>().Open();
-                }
             }
         }
     }

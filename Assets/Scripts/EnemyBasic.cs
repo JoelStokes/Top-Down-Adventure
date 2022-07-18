@@ -5,7 +5,7 @@ using UnityEngine;
 public class EnemyBasic : MonoBehaviour
 {
     public float health = 3;
-    public float walkSpeed = 1;
+    public float walkSpeed = 3;
     public AudioClip SFXHurt;
     public AudioClip SFXDie;
     public int strength = 1;
