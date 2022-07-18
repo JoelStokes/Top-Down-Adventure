@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class DialogController : MonoBehaviour
 {
@@ -20,8 +21,11 @@ public class DialogController : MonoBehaviour
 
     public AudioClip defaultSFX;
 
+    private bool attack = false;
     private int counter = 0;
     private int stringPos = 0;
+    private float stringCounter = 0;
+    private float stringLim = .03f;
     private float highPos;
     private float lowPos;
     private bool changePitch;
@@ -105,22 +109,25 @@ public class DialogController : MonoBehaviour
             {
                 Textbox.GetComponent<Text>().text = textList[stringPos].Substring(0, counter);
 
-                if (Input.GetKeyDown(KeyCode.Space) && counter < textList[stringPos].Length && counter > 1)
+                if (attack && counter < textList[stringPos].Length && counter > 1)
                 {
                     counter = textList[stringPos].Length;   //Immediately jump to the end of the textbox
+                    attack = false;
                 }
-                else if (Input.GetKeyDown(KeyCode.Space) && stringPos < textList.Count - 1 && counter > 1)
+                else if (attack && stringPos < textList.Count - 1 && counter > 1)
                 {
                     Arrow.SetActive(false);     //Change to next string in set
                     stringPos++;
                     counter = 0;
+                    attack = false;
                 }
-                else if (Input.GetKeyDown(KeyCode.Space) && counter > 1)
+                else if (attack && counter > 1)
                 {
                     EndDialog();    //Finished talking
+                    attack = false;
                 }
 
-                if (stringPos < textList.Count && counter < textList[stringPos].Length)
+                if (stringPos < textList.Count && counter < textList[stringPos].Length && stringCounter <= 0)
                 {
                     counter++;
 
@@ -137,8 +144,11 @@ public class DialogController : MonoBehaviour
                         }
                         GetComponent<AudioSource>().PlayOneShot(talkSFX, 1.1f);
                     }
-                }
-                else if (textList.Count != 0 && counter == textList[stringPos].Length)
+
+                    stringCounter = stringLim;
+                } else if (stringPos < textList.Count && counter < textList[stringPos].Length){
+                    stringCounter -= Time.deltaTime;
+                } else if (textList.Count != 0 && counter == textList[stringPos].Length)
                     Arrow.SetActive(true);
             }
         } else
@@ -189,5 +199,12 @@ public class DialogController : MonoBehaviour
             }
         }
         return InText;
+    }
+
+    //Input Manager Functions
+    public void SetAttack(InputAction.CallbackContext context){
+        if (context.phase == InputActionPhase.Started && started){
+            attack = true;
+        }
     }
 }
