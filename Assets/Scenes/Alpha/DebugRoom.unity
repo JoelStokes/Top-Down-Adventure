@@ -1733,7 +1733,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: Door
-  location: SampleScene
+  location: Outlands
   coordinates: {x: 2.81, y: 1.5}
   cameraCoordinates: {x: 0, y: 0}
   facing: 2

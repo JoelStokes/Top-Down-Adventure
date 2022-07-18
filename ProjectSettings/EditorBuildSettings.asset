@@ -20,4 +20,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Alpha/DebugDungeon.unity
     guid: d81206d001d852a4c89775c61626c4af
+  - enabled: 1
+    path: Assets/Scenes/Outlands.unity
+    guid: af80a95f826a0c8418fe721a9e2acc6b
   m_configObjects: {}

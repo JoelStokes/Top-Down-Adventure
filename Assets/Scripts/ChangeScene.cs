@@ -32,7 +32,7 @@ public class ChangeScene : MonoBehaviour
             paperRenderers.Add(child.GetComponent<SpriteRenderer>());
         }
 
-        startColor = paperRenderers[0].color;
+        newColor = paperRenderers[0].color; //Will be set to "startColor" on SetVariable
     }
 
     void Update()
@@ -65,6 +65,13 @@ public class ChangeScene : MonoBehaviour
         startColor = newColor;
         newColor = passedColor;
 
+        GameObject camera = GameObject.Find("Main Camera");
+
+        music = camera.GetComponent<AudioSource>();
+        musicStartVolume = music.volume;
+
+        maskAnim = camera.transform.Find("Cutout Wipe").GetComponent<Animator>();
+
         maskAnim.SetTrigger("Wipe");
 
         changing = true;
@@ -81,7 +88,6 @@ public class ChangeScene : MonoBehaviour
         // Do anything after proper scene has been loaded
         if (SceneManager.GetActiveScene().name == sceneName)
         {
-            transform.position = new Vector3(playerPos.x, playerPos.y, transform.position.z);
             GameObject Player = GameObject.FindGameObjectWithTag("Player");
             Player.transform.position = new Vector3(playerPos.x, playerPos.y, Player.transform.position.z);
 
@@ -93,11 +99,11 @@ public class ChangeScene : MonoBehaviour
     {
         GameObject camera = GameObject.Find("Main Camera");
         camera.transform.position = new Vector3(cameraPos.x, cameraPos.y, camera.transform.position.z);
+        transform.position = new Vector3(cameraPos.x, cameraPos.y, transform.position.z);
 
-        music = camera.GetComponent<AudioSource>();
-        musicStartVolume = music.volume;
+        //music = camera.GetComponent<AudioSource>();
+        //musicStartVolume = music.volume;
 
-        maskAnim = camera.transform.Find("Cutout Wipe").GetComponent<Animator>();
-
+        //maskAnim = camera.transform.Find("Cutout Wipe").GetComponent<Animator>(); //Having issues being called at this time, postponing until SetVariables
     }
 }

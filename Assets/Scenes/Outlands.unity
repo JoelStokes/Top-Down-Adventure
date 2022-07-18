@@ -2663,8 +2663,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 514743188}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.81, y: 2.7, z: 1}
-  m_LocalScale: {x: 1.7201563, y: 2.1125, z: 1}
+  m_LocalPosition: {x: 2.8229, y: 2.729, z: 1}
+  m_LocalScale: {x: 1.7844902, y: 2.2574177, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1665822664}
@@ -10100,7 +10100,7 @@ MonoBehaviour:
   coordinates: {x: 0, y: 3.2}
   cameraCoordinates: {x: 0, y: 0}
   facing: 2
-  color: {r: 0, g: 0, b: 0, a: 0}
+  color: {r: 0.35277238, g: 0.21537913, b: 0.3773585, a: 1}
 --- !u!61 &1852664237
 BoxCollider2D:
   m_ObjectHideFlags: 0
