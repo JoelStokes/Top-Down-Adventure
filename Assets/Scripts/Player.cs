@@ -104,7 +104,7 @@ public class Player : MonoBehaviour
 
             if (ability && !action && !hurting)
             {
-                MagicMeter.UseSpell(20.0f);
+                MagicMeter.UseSpell(50.0f, (int) facing, transform.position);
                 abilityCounter = buttonCount;
                 ability = false;
             }
