@@ -5239,8 +5239,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: Door
-  location: DebugRoom
-  coordinates: {x: -4.351, y: 2.5}
+  location: SettlementMapper
+  coordinates: {x: 0, y: -3.1}
   cameraCoordinates: {x: 0, y: 0}
   facing: 2
   color: {r: 0.8301887, g: 0.74428177, b: 0.57564974, a: 1}
@@ -6956,7 +6956,7 @@ GameObject:
   - component: {fileID: 704583496}
   m_Layer: 0
   m_Name: Graph Paper Parent
-  m_TagString: Untagged
+  m_TagString: BG
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

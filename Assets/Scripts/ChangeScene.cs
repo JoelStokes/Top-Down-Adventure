@@ -20,10 +20,16 @@ public class ChangeScene : MonoBehaviour
     private float timeElapsed = 0;
 
     private List<SpriteRenderer> paperRenderers = new List<SpriteRenderer>();
+    private GameObject Player;
 
     public void Awake()     //Needed for load in. Will be deleted when animation finishes
     {
         DontDestroyOnLoad(this);
+
+        if (FindObjectsOfType(GetType()).Length > 1)
+        {
+            Destroy(gameObject);
+        }
     }
 
     void Start()
@@ -49,6 +55,7 @@ public class ChangeScene : MonoBehaviour
 
             if (maskAnim.GetCurrentAnimatorStateInfo(0).IsName("Done")){
                 SceneManager.LoadScene(location);
+                Player.transform.position = new Vector3 (0,0,transform.position.z);
                 StartCoroutine("waitForSceneLoad", location);   //Coroutine needed to wait and move ZoomLoad & Player after Scene Change completes.
                 changing = false;
             }
@@ -66,6 +73,7 @@ public class ChangeScene : MonoBehaviour
         newColor = passedColor;
 
         GameObject camera = GameObject.Find("Main Camera");
+        Player = GameObject.FindGameObjectWithTag("Player");
 
         music = camera.GetComponent<AudioSource>();
         musicStartVolume = music.volume;

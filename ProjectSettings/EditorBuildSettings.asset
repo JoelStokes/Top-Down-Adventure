@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Outlands.unity
     guid: af80a95f826a0c8418fe721a9e2acc6b
+  - enabled: 1
+    path: Assets/Scenes/SettlementMapper.unity
+    guid: 1f8c8a80ea6600d4d9570331d09dc944
   m_configObjects: {}

@@ -15,6 +15,7 @@ TagManager:
   - Text
   - Chest
   - Stump
+  - BG
   layers:
   - Default
   - TransparentFX
