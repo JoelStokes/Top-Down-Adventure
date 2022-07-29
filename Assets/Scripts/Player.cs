@@ -17,6 +17,7 @@ public class Player : MonoBehaviour
     private Vector2 currentMove;
     public GameObject Stick;
     public ChangeScene changeSceneScript;
+    public Animator interactAnim;
 
     private float attackCounter = 0;
     private bool attack = false;
@@ -266,6 +267,7 @@ public class Player : MonoBehaviour
             Destroy(other.gameObject);
         } else if (other.CompareTag("Text") || other.CompareTag("Chest")){
             textZone = true;
+            interactAnim.SetBool("Interacting", true);
         }
     }
 
@@ -297,6 +299,7 @@ public class Player : MonoBehaviour
     {
         if (other.CompareTag("Text") || other.CompareTag("Chest")){
             textZone = false;
+            interactAnim.SetBool("Interacting", false);
         }
     }    
     
